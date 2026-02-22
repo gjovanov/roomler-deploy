@@ -1,6 +1,6 @@
 # Roomler K8s Deployment
 
-Ansible-automated deployment of the [Roomler](https://github.com/nickvdyck/roomler) collaboration platform to Kubernetes. Migrates the full Docker stack (app, database, cache, WebRTC gateway) into K8s with zero-downtime cutover, data migration, and automated backups.
+Ansible-automated deployment of the [Roomler](https://github.com/gjovanov/roomler) collaboration platform to Kubernetes. Migrates the full Docker stack (app, database, cache, WebRTC gateway) into K8s with zero-downtime cutover, data migration, and automated backups.
 
 ## Features
 
@@ -183,10 +183,9 @@ URL=https://roomler.live
 API_URL=https://roomler.live
 JANUS_URL=wss://janus.roomler.live/janus_ws
 
-# TURN/STUN
+# TURN/STUN (ephemeral credentials via shared secret)
 TURN_URL=turns:coturn.roomler.live:443?transport=udp
-TURN_USERNAME=hammer
-TURN_PASSWORD=<your-turn-password>
+COTURN_AUTH_SECRET=<your-coturn-shared-secret>
 
 # OAuth (Facebook, Google, GitHub, LinkedIn, Microsoft)
 FACEBOOK_ID=...
@@ -226,8 +225,7 @@ DOCKER_UPLOADS_PATH=/path/to/docker/uploads
 | `API_URL` | API base URL (also SSR baseURL) | Roomler ConfigMap, Nuxt axios |
 | `JANUS_URL` | Janus WebSocket URL | Roomler ConfigMap |
 | `TURN_URL` | COTURN server URL | Roomler ConfigMap |
-| `TURN_USERNAME` | TURN credentials | Roomler Secret |
-| `TURN_PASSWORD` | TURN credentials | Roomler Secret |
+| `COTURN_AUTH_SECRET` | COTURN shared secret (HMAC-SHA1 credential generation) | Ansible (Roomler Secret) |
 | `SENDGRID_API_KEY` | Email service | Roomler Secret |
 | `SUPER_ADMIN_EMAILS` | Admin email list (JSON array) | Roomler ConfigMap |
 | `KUBECONFIG_PATH` | Path to kubeconfig file | Scripts, Ansible |
@@ -378,7 +376,7 @@ Verify backups:
 | PM2 exits after 10s | Use `pm2-runtime` (not `pm2 start --attach`). The `--attach` flag streams logs then exits |
 | MongoDB auth failure | DB_CONN must NOT include credentials if MONGO_INITDB_ROOT_* was not set. Use `mongodb://mongodb.roomler.svc:27017/roomlerdb` |
 | NodePort conflict | Check existing NodePorts: `kubectl get svc --all-namespaces -o wide \| grep NodePort`. Grafana uses 30300 |
-| TURN credentials rejected | COTURN uses `lt-cred-mech`. Verify user key matches: `turnadmin -k -u <user> -r roomler.live -p <password>` |
+| TURN credentials rejected | COTURN uses `use-auth-secret`. Verify credentials: `echo -n "9999999999:roomler" \| openssl dgst -sha1 -hmac "$COTURN_AUTH_SECRET" -binary \| base64` |
 | Uploads not showing | Check PVC is mounted at `/roomler/packages/ui/static/uploads` and files exist on worker1 at `/data/roomler/uploads` |
 | nginx config invalid after cutover | Restore backups: `cp *.bak-TIMESTAMP *` and `docker exec nginx nginx -s reload` |
 
@@ -434,7 +432,7 @@ roomler-deploy/
 | Project | Description |
 |---------|-------------|
 | [k8s-cluster](../k8s-cluster/) | K8s cluster setup (VMs, Cilium, COTURN, monitoring) |
-| [roomler](https://github.com/nickvdyck/roomler) | The Roomler application source code |
+| [roomler](https://github.com/gjovanov/roomler) | The Roomler application source code |
 
 ## License
 
