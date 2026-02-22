@@ -1,0 +1,25 @@
+graph TB
+    subgraph Cron["Daily Cron Jobs (Host)"]
+        C1["03:00<br/>backup-mongodb.sh"]
+        C2["03:30<br/>backup-uploads.sh"]
+        C3["04:00<br/>verify-backups.sh"]
+    end
+
+    subgraph K8s["K8s Cluster"]
+        MG["MongoDB Pod"]
+        UL["Uploads PV<br/>(on worker1)"]
+    end
+
+    subgraph Backup["Host: ~/backup/"]
+        MB["mongodb/<br/>roomlerdb-YYYY-MM-DD.archive.gz<br/>(~50 MB/day)"]
+        UB["uploads/<br/>YYYY-MM-DD/<br/>(hard-linked snapshots)"]
+    end
+
+    C1 -->|"kubectl exec mongodump --gzip"| MG --> MB
+    C2 -->|"rsync --link-dest"| UL --> UB
+    C3 -->|"check age + size + count"| MB
+    C3 -->|"check age + size + count"| UB
+
+    style Cron fill:#e94560,color:#fff
+    style K8s fill:#533483,color:#fff
+    style Backup fill:#0f3460,color:#fff

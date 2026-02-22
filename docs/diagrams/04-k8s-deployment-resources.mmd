@@ -1,0 +1,45 @@
+graph TB
+    subgraph NS["Namespace: roomler"]
+        subgraph Storage
+            PV1["PV: mongodb<br/>hostPath: /data/roomler/mongodb"]
+            PV2["PV: uploads<br/>hostPath: /data/roomler/uploads"]
+            PVC1["PVC: mongodb-data<br/>5Gi"]
+            PVC2["PVC: roomler-uploads<br/>5Gi"]
+        end
+
+        subgraph Pods
+            MG["MongoDB<br/>StatefulSet<br/>1 replica"]
+            RD["Redis<br/>Deployment<br/>1 replica"]
+            JN["Janus<br/>Deployment<br/>hostNetwork"]
+            RL["Roomler<br/>Deployment<br/>PM2 x4 workers"]
+        end
+
+        subgraph Config
+            CM["ConfigMap<br/>roomler-config<br/>(env vars)"]
+            SEC["Secret<br/>roomler-secret<br/>(passwords, keys)"]
+        end
+
+        subgraph Services
+            S1["mongodb<br/>ClusterIP :27017"]
+            S2["redis<br/>ClusterIP :6379"]
+            S3["janus<br/>ClusterIP :8088/:8188"]
+            S4["roomler<br/>NodePort :30030"]
+            S5["janus-nodeport<br/>NodePort :30808/:30818"]
+        end
+    end
+
+    PVC1 --> PV1
+    PVC2 --> PV2
+    PVC1 --> MG
+    PVC2 --> RL
+    CM --> RL
+    SEC --> RL
+    MG --> S1
+    RD --> S2
+    JN --> S3
+    JN --> S5
+    RL --> S4
+
+    style NS fill:#533483,color:#fff
+    style Storage fill:#0f3460,color:#fff
+    style Config fill:#16213e,color:#fff

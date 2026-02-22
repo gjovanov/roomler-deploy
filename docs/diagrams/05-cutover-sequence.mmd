@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant nginx as Host nginx
+    participant Docker as Docker Containers
+    participant K8s as K8s Pods
+
+    Note over nginx,Docker: Before cutover
+    nginx->>Docker: roomler.live → localhost:3000
+    nginx->>Docker: janus.roomler.live → localhost:8088
+
+    Note over nginx,K8s: Update nginx upstreams
+    nginx->>K8s: roomler.live → 10.10.10.11:30030
+    nginx->>K8s: janus.roomler.live → 10.10.10.11:30808/30818
+
+    Note over nginx: nginx -s reload
+    Note over Docker: Docker still running (safety net!)
+
+    Note over nginx,K8s: Verify: curl https://roomler.live → 200 OK
+    Note over nginx,K8s: Verify: WebSocket connects
+    Note over nginx,K8s: Verify: Uploads load
+
+    Note over Docker: All good? Stop Docker containers
+    Docker->>Docker: docker stop roomler2 mongo2 redis janus nginx2

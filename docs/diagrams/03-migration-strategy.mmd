@@ -1,0 +1,11 @@
+graph LR
+    A["1. Copy Data<br/>to K8s worker"] --> B["2. Deploy<br/>K8s services"]
+    B --> C["3. Restore<br/>MongoDB"]
+    C --> D["4. Test<br/>internally"]
+    D --> E["5. Switch<br/>nginx upstreams"]
+    E --> F["6. Test<br/>externally"]
+    F --> G["7. Stop<br/>Docker containers"]
+    G --> H["8. Setup<br/>backups"]
+
+    style A fill:#e94560,color:#fff
+    style E fill:#e94560,color:#fff

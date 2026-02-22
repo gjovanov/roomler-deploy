@@ -1,0 +1,17 @@
+graph TB
+    subgraph Docker["Docker on Bare Metal Host"]
+        NGX["nginx<br/>HTTP/3 + Brotli + GeoIP2<br/>(custom compiled)"]
+        NGX2["nginx2<br/>Stream proxy for COTURN"]
+        RM["roomler<br/>Node.js + PM2<br/>port 3000"]
+        MG["mongo<br/>MongoDB 4.0.3<br/>(yes, really)"]
+        RD["redis<br/>pub/sub"]
+        JN["janus<br/>WebRTC Gateway"]
+        CT["coturn<br/>(now redundant!)"]
+    end
+
+    NGX -->|":3000"| RM
+    NGX -->|":8088/:8188"| JN
+    RM --> MG
+    RM --> RD
+
+    style Docker fill:#1a1a2e,color:#fff
