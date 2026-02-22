@@ -22,7 +22,7 @@ This is the story of that migration. The good parts, the bad parts, and the "why
 
 Here's what my Docker setup looked like before the migration:
 
-![Docker Starting Point](https://raw.githubusercontent.com/gjovanov/roomler-deploy/main/docs/diagrams/01-docker-starting-point.svg)
+![Docker Starting Point](https://raw.githubusercontent.com/gjovanov/roomler-deploy/main/docs/diagrams/01-docker-starting-point.png)
 
 Six containers. Two nginx instances. A MongoDB version so old it stopped receiving security patches in 2022. A COTURN container that was now redundant since we already deployed it in K8s (see [Part 1](https://github.com/gjovanov/k8s-cluster/blob/main/docs/blog-post.md)).
 
@@ -32,7 +32,7 @@ It worked. But it was held together with duct tape and good intentions.
 
 Here's what we're building:
 
-![K8S Target Architecture](https://raw.githubusercontent.com/gjovanov/roomler-deploy/main/docs/diagrams/02-k8s-target-architecture.svg)
+![K8S Target Architecture](https://raw.githubusercontent.com/gjovanov/roomler-deploy/main/docs/diagrams/02-k8s-target-architecture.png)
 
 Notice that nginx stays on the host. Why? Because it's a custom-compiled build with HTTP/3 (QUIC), Brotli compression, and GeoIP2 blocking — features that no K8s Ingress controller supports out of the box. Moving it into K8s would mean maintaining a custom Docker image for the ingress controller, and honestly, life's too short.
 
@@ -42,7 +42,7 @@ Everything else moves into K8s. Clean separation, proper resource limits, health
 
 There's a temptation to do the migration all at once — stop Docker, deploy K8s, pray. Don't do that. Here's our approach:
 
-![Migration Strategy](https://raw.githubusercontent.com/gjovanov/roomler-deploy/main/docs/diagrams/03-migration-strategy.svg)
+![Migration Strategy](https://raw.githubusercontent.com/gjovanov/roomler-deploy/main/docs/diagrams/03-migration-strategy.png)
 
 The key insight: **Docker containers keep running until we've verified K8s is working perfectly.** If anything goes wrong at step 6, we just revert the nginx config and reload. The Docker containers never stopped. Zero downtime.
 
@@ -99,7 +99,7 @@ rsync -av /roomler/uploads/ k8s-worker1:/data/roomler/uploads/
 
 The entire stack is deployed via a single Ansible playbook. Here's what it creates:
 
-![K8S Deployment Resources](https://raw.githubusercontent.com/gjovanov/roomler-deploy/main/docs/diagrams/04-k8s-deployment-resources.svg)
+![K8S Deployment Resources](https://raw.githubusercontent.com/gjovanov/roomler-deploy/main/docs/diagrams/04-k8s-deployment-resources.png)
 
 <details>
 <summary><strong>Deep Dive: Why StatefulSet for MongoDB but Deployment for everything else?</strong></summary>
@@ -149,7 +149,7 @@ The Ansible template computes this automatically from the shared secret in `.env
 
 This is the moment of truth. We've got K8s services running, MongoDB restored, pods healthy. Time to point nginx at the new backends.
 
-![Cutover Sequence](https://raw.githubusercontent.com/gjovanov/roomler-deploy/main/docs/diagrams/05-cutover-sequence.svg)
+![Cutover Sequence](https://raw.githubusercontent.com/gjovanov/roomler-deploy/main/docs/diagrams/05-cutover-sequence.png)
 
 The cutover script handles this automatically:
 1. Backs up current nginx configs (with timestamps)
@@ -167,7 +167,7 @@ docker exec nginx nginx -s reload
 
 With the migration done, we set up automated daily backups:
 
-![Backup Jobs](https://raw.githubusercontent.com/gjovanov/roomler-deploy/main/docs/diagrams/06-backup-jobs.svg)
+![Backup Jobs](https://raw.githubusercontent.com/gjovanov/roomler-deploy/main/docs/diagrams/06-backup-jobs.png)
 
 | Backup | Method | Daily Size | 7-Day Retention |
 |--------|--------|-----------|-----------------|
