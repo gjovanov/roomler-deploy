@@ -1,0 +1,6 @@
+---
+- name: Wait for MongoDB ready
+  shell: |
+    KUBECONFIG={{ kubeconfig_path }} kubectl wait --for=condition=ready pod/mongodb-0 -n {{ roomler_namespace }} --timeout=120s
+  delegate_to: localhost
+  become: false

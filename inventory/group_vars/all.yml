@@ -1,0 +1,87 @@
+---
+# =============================================================================
+# Roomler K8s Deployment Variables
+# =============================================================================
+
+# --- Namespace ---
+roomler_namespace: "roomler"
+
+# --- K8s Cluster ---
+kubeconfig_path: "/home/gjovanov/k8s-cluster/files/kubeconfig"
+k8s_worker1_ip: "10.10.10.11"
+k8s_worker2_ip: "10.10.10.12"
+
+# --- Data target node ---
+data_node: "k8s-worker1"
+data_base_path: "/data/roomler"
+
+# --- MongoDB ---
+mongodb_image: "mongo:7"
+mongodb_storage_size: "5Gi"
+mongodb_cpu_request: "250m"
+mongodb_cpu_limit: "500m"
+mongodb_memory_request: "512Mi"
+mongodb_memory_limit: "1Gi"
+mongodb_root_username: "{{ lookup('env', 'MONGO_ROOT_USERNAME') }}"
+mongodb_root_password: "{{ lookup('env', 'MONGO_ROOT_PASSWORD') }}"
+mongodb_database: "{{ lookup('env', 'MONGO_DATABASE') | default('roomlerdb', true) }}"
+
+# --- Redis ---
+redis_image: "redis:7-alpine"
+redis_cpu_request: "50m"
+redis_cpu_limit: "100m"
+redis_memory_request: "64Mi"
+redis_memory_limit: "128Mi"
+
+# --- Janus Gateway ---
+janus_image: "gjovanov/janus-slim:latest"
+janus_cpu_request: "250m"
+janus_cpu_limit: "1000m"
+janus_memory_request: "256Mi"
+janus_memory_limit: "512Mi"
+
+# --- Roomler App ---
+roomler_image: "gjovanov/roomler:latest"
+roomler_replicas: 1
+roomler_cpu_request: "250m"
+roomler_cpu_limit: "500m"
+roomler_memory_request: "256Mi"
+roomler_memory_limit: "512Mi"
+roomler_uploads_storage_size: "5Gi"
+
+# --- Roomler Environment (from .env) ---
+roomler_url: "{{ lookup('env', 'URL') }}"
+roomler_api_url: "{{ lookup('env', 'API_URL') }}"
+roomler_janus_url: "{{ lookup('env', 'JANUS_URL') }}"
+roomler_turn_url: "{{ lookup('env', 'TURN_URL') }}"
+roomler_turn_username: "{{ lookup('env', 'TURN_USERNAME') }}"
+roomler_turn_password: "{{ lookup('env', 'TURN_PASSWORD') }}"
+roomler_sendgrid_api_key: "{{ lookup('env', 'SENDGRID_API_KEY') }}"
+roomler_facebook_id: "{{ lookup('env', 'FACEBOOK_ID') }}"
+roomler_facebook_secret: "{{ lookup('env', 'FACEBOOK_SECRET') }}"
+roomler_google_id: "{{ lookup('env', 'GOOGLE_ID') }}"
+roomler_google_secret: "{{ lookup('env', 'GOOGLE_SECRET') }}"
+roomler_github_id: "{{ lookup('env', 'GITHUB_ID') }}"
+roomler_github_secret: "{{ lookup('env', 'GITHUB_SECRET') }}"
+roomler_linkedin_id: "{{ lookup('env', 'LINKEDIN_ID') }}"
+roomler_linkedin_secret: "{{ lookup('env', 'LINKEDIN_SECRET') }}"
+roomler_microsoft_id: "{{ lookup('env', 'MICROSOFT_ID') }}"
+roomler_microsoft_secret: "{{ lookup('env', 'MICROSOFT_SECRET') }}"
+roomler_giphy_api_key: "{{ lookup('env', 'GIPHY_API_KEY') }}"
+roomler_google_analytics_id: "{{ lookup('env', 'GOOGLE_ANALYTICS_ID') }}"
+roomler_super_admin_emails: "{{ lookup('env', 'SUPER_ADMIN_EMAILS') }}"
+roomler_web_push_contact: "{{ lookup('env', 'WEB_PUSH_CONTACT') }}"
+roomler_web_push_publish_key: "{{ lookup('env', 'WEB_PUSH_PUBLISH_KEY') }}"
+roomler_web_push_private_key: "{{ lookup('env', 'WEB_PUSH_PRIVATE_KEY') }}"
+
+# --- Docker sources (for data migration) ---
+docker_mongo_container: "mongo2"
+docker_mongo_data_path: "/gjovanov/db"
+docker_uploads_path: "/roomler/uploads"
+
+# --- Backup ---
+backup_base_path: "/home/gjovanov/roomler-deploy/backup"
+backup_retention_days: 7
+
+# --- Host nginx ---
+host_nginx_conf_dir: "/gjovanov/nginx/conf.d"

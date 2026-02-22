@@ -1,0 +1,92 @@
+---
+# =============================================================================
+# Role: roomler-deploy
+# Deploy Roomler stack (MongoDB, Redis, Janus, Roomler) to K8s
+# =============================================================================
+
+# --- Step 1: Create data directories on worker node ---
+- name: Create data directories on {{ data_node }}
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ data_base_path }}/mongodb"
+    - "{{ data_base_path }}/uploads"
+  delegate_to: "{{ data_node }}"
+
+# --- Step 2: Apply K8s manifests ---
+- name: Create namespace
+  shell: |
+    KUBECONFIG={{ kubeconfig_path }} kubectl apply -f -
+  args:
+    stdin: "{{ lookup('template', 'namespace.yml.j2') }}"
+  delegate_to: localhost
+  become: false
+
+- name: Deploy MongoDB StatefulSet
+  shell: |
+    KUBECONFIG={{ kubeconfig_path }} kubectl apply -f -
+  args:
+    stdin: "{{ lookup('template', 'mongodb-statefulset.yml.j2') }}"
+  delegate_to: localhost
+  become: false
+
+- name: Wait for MongoDB pod to be ready
+  shell: |
+    KUBECONFIG={{ kubeconfig_path }} kubectl wait --for=condition=ready pod/mongodb-0 -n {{ roomler_namespace }} --timeout=180s
+  delegate_to: localhost
+  become: false
+
+- name: Deploy Redis
+  shell: |
+    KUBECONFIG={{ kubeconfig_path }} kubectl apply -f -
+  args:
+    stdin: "{{ lookup('template', 'redis-deployment.yml.j2') }}"
+  delegate_to: localhost
+  become: false
+
+- name: Deploy Janus Gateway
+  shell: |
+    KUBECONFIG={{ kubeconfig_path }} kubectl apply -f -
+  args:
+    stdin: "{{ lookup('template', 'janus-deployment.yml.j2') }}"
+  delegate_to: localhost
+  become: false
+
+- name: Deploy Roomler app and NodePort services
+  shell: |
+    KUBECONFIG={{ kubeconfig_path }} kubectl apply -f -
+  args:
+    stdin: "{{ lookup('template', 'roomler-deployment.yml.j2') }}"
+  delegate_to: localhost
+  become: false
+
+- name: Wait for all pods to be ready
+  shell: |
+    KUBECONFIG={{ kubeconfig_path }} kubectl wait --for=condition=ready pods --all -n {{ roomler_namespace }} --timeout=180s
+  delegate_to: localhost
+  become: false
+
+# --- Step 3: Verify deployment ---
+- name: Get all pods in roomler namespace
+  shell: |
+    KUBECONFIG={{ kubeconfig_path }} kubectl get pods -n {{ roomler_namespace }} -o wide
+  delegate_to: localhost
+  become: false
+  register: roomler_pods
+
+- name: Show roomler pods
+  debug:
+    msg: "{{ roomler_pods.stdout_lines }}"
+
+- name: Get services in roomler namespace
+  shell: |
+    KUBECONFIG={{ kubeconfig_path }} kubectl get svc -n {{ roomler_namespace }}
+  delegate_to: localhost
+  become: false
+  register: roomler_services
+
+- name: Show roomler services
+  debug:
+    msg: "{{ roomler_services.stdout_lines }}"

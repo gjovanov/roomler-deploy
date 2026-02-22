@@ -1,0 +1,67 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: janus
+  namespace: {{ roomler_namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: janus
+  template:
+    metadata:
+      labels:
+        app: janus
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      nodeSelector:
+        kubernetes.io/hostname: {{ data_node }}
+      containers:
+        - name: janus
+          image: {{ janus_image }}
+          ports:
+            - containerPort: 8088
+              name: http
+            - containerPort: 8188
+              name: websocket
+            - containerPort: 7088
+              name: admin-http
+            - containerPort: 7188
+              name: admin-ws
+          resources:
+            requests:
+              cpu: {{ janus_cpu_request }}
+              memory: {{ janus_memory_request }}
+            limits:
+              cpu: {{ janus_cpu_limit }}
+              memory: {{ janus_memory_limit }}
+          readinessProbe:
+            httpGet:
+              path: /janus/info
+              port: 8088
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: janus
+  namespace: {{ roomler_namespace }}
+spec:
+  selector:
+    app: janus
+  ports:
+    - name: http
+      port: 8088
+      targetPort: 8088
+    - name: websocket
+      port: 8188
+      targetPort: 8188
+    - name: admin-http
+      port: 7088
+      targetPort: 7088
+    - name: admin-ws
+      port: 7188
+      targetPort: 7188

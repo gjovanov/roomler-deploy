@@ -1,0 +1,182 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: roomler-uploads-pv
+  labels:
+    app: roomler
+    project: roomler
+spec:
+  capacity:
+    storage: {{ roomler_uploads_storage_size }}
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: {{ data_base_path }}/uploads
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ data_node }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: roomler-uploads
+  namespace: {{ roomler_namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ roomler_uploads_storage_size }}
+  selector:
+    matchLabels:
+      app: roomler
+      project: roomler
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: roomler-secret
+  namespace: {{ roomler_namespace }}
+type: Opaque
+stringData:
+  DB_CONN: "mongodb://{{ mongodb_root_username }}:{{ mongodb_root_password }}@mongodb.{{ roomler_namespace }}.svc.cluster.local:27017/{{ mongodb_database }}"
+  SENDGRID_API_KEY: "{{ roomler_sendgrid_api_key }}"
+  FACEBOOK_SECRET: "{{ roomler_facebook_secret }}"
+  GOOGLE_SECRET: "{{ roomler_google_secret }}"
+  GITHUB_SECRET: "{{ roomler_github_secret }}"
+  LINKEDIN_SECRET: "{{ roomler_linkedin_secret }}"
+  MICROSOFT_SECRET: "{{ roomler_microsoft_secret }}"
+  TURN_PASSWORD: "{{ roomler_turn_password }}"
+  WEB_PUSH_PRIVATE_KEY: "{{ roomler_web_push_private_key }}"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: roomler-config
+  namespace: {{ roomler_namespace }}
+data:
+  URL: "{{ roomler_url }}"
+  API_URL: "{{ roomler_api_url }}"
+  JANUS_URL: "{{ roomler_janus_url }}"
+  TURN_URL: "{{ roomler_turn_url }}"
+  TURN_USERNAME: "{{ roomler_turn_username }}"
+  WS_SCALEOUT_ENABLED: "true"
+  WS_SCALEOUT_HOST: "redis.{{ roomler_namespace }}.svc.cluster.local"
+  FACEBOOK_ID: "{{ roomler_facebook_id }}"
+  GOOGLE_ID: "{{ roomler_google_id }}"
+  GITHUB_ID: "{{ roomler_github_id }}"
+  LINKEDIN_ID: "{{ roomler_linkedin_id }}"
+  MICROSOFT_ID: "{{ roomler_microsoft_id }}"
+  GIPHY_API_KEY: "{{ roomler_giphy_api_key }}"
+  GOOGLE_ANALYTICS_ID: "{{ roomler_google_analytics_id }}"
+  NUXT_TELEMETRY_DISABLED: "1"
+  SUPER_ADMIN_EMAILS: '{{ roomler_super_admin_emails }}'
+  WEB_PUSH_CONTACT: "{{ roomler_web_push_contact }}"
+  WEB_PUSH_PUBLISH_KEY: "{{ roomler_web_push_publish_key }}"
+  NODE_ENV: "production"
+  HOST: "0.0.0.0"
+  PORT: "3000"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: roomler
+  namespace: {{ roomler_namespace }}
+spec:
+  replicas: {{ roomler_replicas }}
+  selector:
+    matchLabels:
+      app: roomler
+  template:
+    metadata:
+      labels:
+        app: roomler
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: {{ data_node }}
+      containers:
+        - name: roomler
+          image: {{ roomler_image }}
+          ports:
+            - containerPort: 3000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: roomler-config
+            - secretRef:
+                name: roomler-secret
+          volumeMounts:
+            - name: uploads
+              mountPath: /roomler/packages/ui/static/uploads
+          resources:
+            requests:
+              cpu: {{ roomler_cpu_request }}
+              memory: {{ roomler_memory_request }}
+            limits:
+              cpu: {{ roomler_cpu_limit }}
+              memory: {{ roomler_memory_limit }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: roomler-uploads
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: roomler
+  namespace: {{ roomler_namespace }}
+spec:
+  type: NodePort
+  selector:
+    app: roomler
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 30300
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: janus-nodeport
+  namespace: {{ roomler_namespace }}
+spec:
+  type: NodePort
+  selector:
+    app: janus
+  ports:
+    - name: http
+      port: 8088
+      targetPort: 8088
+      nodePort: 30808
+    - name: websocket
+      port: 8188
+      targetPort: 8188
+      nodePort: 30818
+    - name: admin-http
+      port: 7088
+      targetPort: 7088
+      nodePort: 30708
+    - name: admin-ws
+      port: 7188
+      targetPort: 7188
+      nodePort: 30718

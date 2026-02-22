@@ -1,0 +1,123 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: roomler-mongodb-pv
+  labels:
+    app: mongodb
+    project: roomler
+spec:
+  capacity:
+    storage: {{ mongodb_storage_size }}
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: {{ data_base_path }}/mongodb
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - {{ data_node }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-data
+  namespace: {{ roomler_namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ mongodb_storage_size }}
+  selector:
+    matchLabels:
+      app: mongodb
+      project: roomler
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongodb-secret
+  namespace: {{ roomler_namespace }}
+type: Opaque
+stringData:
+  MONGO_INITDB_ROOT_USERNAME: "{{ mongodb_root_username }}"
+  MONGO_INITDB_ROOT_PASSWORD: "{{ mongodb_root_password }}"
+  MONGO_INITDB_DATABASE: "{{ mongodb_database }}"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  namespace: {{ roomler_namespace }}
+spec:
+  serviceName: mongodb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: {{ data_node }}
+      containers:
+        - name: mongodb
+          image: {{ mongodb_image }}
+          ports:
+            - containerPort: 27017
+              name: mongodb
+          envFrom:
+            - secretRef:
+                name: mongodb-secret
+          volumeMounts:
+            - name: mongodb-data
+              mountPath: /data/db
+          resources:
+            requests:
+              cpu: {{ mongodb_cpu_request }}
+              memory: {{ mongodb_memory_request }}
+            limits:
+              cpu: {{ mongodb_cpu_limit }}
+              memory: {{ mongodb_memory_limit }}
+          livenessProbe:
+            exec:
+              command:
+                - mongosh
+                - --eval
+                - "db.adminCommand('ping')"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - mongosh
+                - --eval
+                - "db.adminCommand('ping')"
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: mongodb-data
+          persistentVolumeClaim:
+            claimName: mongodb-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  namespace: {{ roomler_namespace }}
+spec:
+  selector:
+    app: mongodb
+  ports:
+    - port: 27017
+      targetPort: 27017
+  clusterIP: None

@@ -1,0 +1,10 @@
+---
+# Defaults can be overridden in inventory/group_vars/all.yml
+roomler_namespace: "roomler"
+data_node: "k8s-worker1"
+data_base_path: "/data/roomler"
+mongodb_image: "mongo:7"
+redis_image: "redis:7-alpine"
+janus_image: "gjovanov/janus-slim:latest"
+roomler_image: "gjovanov/roomler:latest"
+roomler_replicas: 1

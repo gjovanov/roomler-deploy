@@ -1,0 +1,10 @@
+---
+# =============================================================================
+# Playbook: Deploy Roomler stack to K8s
+# Usage: ansible-playbook playbooks/deploy.yml -v
+# =============================================================================
+- name: Deploy Roomler stack to Kubernetes
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - roomler-deploy
