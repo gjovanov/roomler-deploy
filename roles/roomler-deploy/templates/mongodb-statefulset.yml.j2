@@ -75,9 +75,9 @@ spec:
           ports:
             - containerPort: 27017
               name: mongodb
-          envFrom:
-            - secretRef:
-                name: mongodb-secret
+          env:
+            - name: MONGO_INITDB_DATABASE
+              value: "{{ mongodb_database }}"
           volumeMounts:
             - name: mongodb-data
               mountPath: /data/db
@@ -92,18 +92,23 @@ spec:
             exec:
               command:
                 - mongosh
+                - --quiet
                 - --eval
-                - "db.adminCommand('ping')"
-            initialDelaySeconds: 30
-            periodSeconds: 10
+                - "db.runCommand({ping:1}).ok"
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 10
+            failureThreshold: 5
           readinessProbe:
             exec:
               command:
                 - mongosh
+                - --quiet
                 - --eval
-                - "db.adminCommand('ping')"
-            initialDelaySeconds: 5
-            periodSeconds: 5
+                - "db.runCommand({ping:1}).ok"
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 10
       volumes:
         - name: mongodb-data
           persistentVolumeClaim:

@@ -44,9 +44,9 @@ janus_memory_limit: "512Mi"
 roomler_image: "gjovanov/roomler:latest"
 roomler_replicas: 1
 roomler_cpu_request: "250m"
-roomler_cpu_limit: "500m"
-roomler_memory_request: "256Mi"
-roomler_memory_limit: "512Mi"
+roomler_cpu_limit: "1000m"
+roomler_memory_request: "512Mi"
+roomler_memory_limit: "1Gi"
 roomler_uploads_storage_size: "5Gi"
 
 # --- Roomler Environment (from .env) ---

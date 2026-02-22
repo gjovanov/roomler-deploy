@@ -47,7 +47,7 @@ metadata:
   namespace: {{ roomler_namespace }}
 type: Opaque
 stringData:
-  DB_CONN: "mongodb://{{ mongodb_root_username }}:{{ mongodb_root_password }}@mongodb.{{ roomler_namespace }}.svc.cluster.local:27017/{{ mongodb_database }}"
+  DB_CONN: "mongodb://mongodb.{{ roomler_namespace }}.svc.cluster.local:27017/{{ mongodb_database }}"
   SENDGRID_API_KEY: "{{ roomler_sendgrid_api_key }}"
   FACEBOOK_SECRET: "{{ roomler_facebook_secret }}"
   GOOGLE_SECRET: "{{ roomler_google_secret }}"
@@ -78,7 +78,7 @@ data:
   GIPHY_API_KEY: "{{ roomler_giphy_api_key }}"
   GOOGLE_ANALYTICS_ID: "{{ roomler_google_analytics_id }}"
   NUXT_TELEMETRY_DISABLED: "1"
-  SUPER_ADMIN_EMAILS: '{{ roomler_super_admin_emails }}'
+  SUPER_ADMIN_EMAILS: "{{ roomler_super_admin_emails }}"
   WEB_PUSH_CONTACT: "{{ roomler_web_push_contact }}"
   WEB_PUSH_PUBLISH_KEY: "{{ roomler_web_push_publish_key }}"
   NODE_ENV: "production"
@@ -105,6 +105,9 @@ spec:
       containers:
         - name: roomler
           image: {{ roomler_image }}
+          command: ["npx"]
+          args: ["pm2-runtime", "start", "/roomler/pm2.config.js"]
+          workingDir: /roomler/packages/ui
           ports:
             - containerPort: 3000
               name: http
@@ -124,17 +127,17 @@ spec:
               cpu: {{ roomler_cpu_limit }}
               memory: {{ roomler_memory_limit }}
           readinessProbe:
-            httpGet:
-              path: /
+            tcpSocket:
               port: 3000
-            initialDelaySeconds: 10
-            periodSeconds: 5
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 5
           livenessProbe:
-            httpGet:
-              path: /
+            tcpSocket:
               port: 3000
             initialDelaySeconds: 30
-            periodSeconds: 10
+            periodSeconds: 15
+            failureThreshold: 10
       volumes:
         - name: uploads
           persistentVolumeClaim:
@@ -152,7 +155,7 @@ spec:
   ports:
     - port: 3000
       targetPort: 3000
-      nodePort: 30300
+      nodePort: 30030
 ---
 apiVersion: v1
 kind: Service

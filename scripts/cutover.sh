@@ -35,10 +35,10 @@ ok "All K8s pods healthy"
 
 # --- Test K8s Roomler service ---
 log "Testing K8s Roomler service..."
-if curl -sf -o /dev/null "http://$K8S_WORKER1_IP:30300/"; then
-  ok "Roomler reachable at $K8S_WORKER1_IP:30300"
+if curl -sf -o /dev/null "http://$K8S_WORKER1_IP:30030/"; then
+  ok "Roomler reachable at $K8S_WORKER1_IP:30030"
 else
-  err "Roomler NOT reachable at $K8S_WORKER1_IP:30300. Aborting."
+  err "Roomler NOT reachable at $K8S_WORKER1_IP:30030. Aborting."
   exit 1
 fi
 
@@ -51,7 +51,7 @@ ok "Configs backed up with suffix .bak-$BACKUP_TS"
 
 # --- Update nginx: roomler upstream ---
 log "Updating roomler.live.conf upstream..."
-sed -i "s|proxy_pass.*http://roomler2:3000;|proxy_pass         http://$K8S_WORKER1_IP:30300;|" \
+sed -i "s|proxy_pass.*http://roomler2:3000;|proxy_pass         http://$K8S_WORKER1_IP:30030;|" \
   "$NGINX_CONF_DIR/roomler.live.conf"
 
 # --- Update nginx: janus upstreams ---
