@@ -7,9 +7,9 @@
 roomler_namespace: "roomler"
 
 # --- K8s Cluster ---
-kubeconfig_path: "/home/gjovanov/k8s-cluster/files/kubeconfig"
-k8s_worker1_ip: "10.10.10.11"
-k8s_worker2_ip: "10.10.10.12"
+kubeconfig_path: "{{ lookup('env', 'KUBECONFIG_PATH') }}"
+k8s_worker1_ip: "{{ lookup('env', 'K8S_WORKER1_IP') }}"
+k8s_worker2_ip: "{{ lookup('env', 'K8S_WORKER2_IP') }}"
 
 # --- Data target node ---
 data_node: "k8s-worker1"
@@ -54,8 +54,11 @@ roomler_url: "{{ lookup('env', 'URL') }}"
 roomler_api_url: "{{ lookup('env', 'API_URL') }}"
 roomler_janus_url: "{{ lookup('env', 'JANUS_URL') }}"
 roomler_turn_url: "{{ lookup('env', 'TURN_URL') }}"
-roomler_turn_username: "{{ lookup('env', 'TURN_USERNAME') }}"
-roomler_turn_password: "{{ lookup('env', 'TURN_PASSWORD') }}"
+# Ephemeral TURN credentials (use-auth-secret mode)
+# Username format: expiry_timestamp:label (far-future timestamp = effectively permanent)
+coturn_auth_secret: "{{ lookup('env', 'COTURN_AUTH_SECRET') }}"
+roomler_turn_username: "9999999999:roomler"
+roomler_turn_password: "{{ lookup('pipe', 'echo -n 9999999999:roomler | openssl dgst -sha1 -hmac ' + lookup('env', 'COTURN_AUTH_SECRET') + ' -binary | base64') }}"
 roomler_sendgrid_api_key: "{{ lookup('env', 'SENDGRID_API_KEY') }}"
 roomler_facebook_id: "{{ lookup('env', 'FACEBOOK_ID') }}"
 roomler_facebook_secret: "{{ lookup('env', 'FACEBOOK_SECRET') }}"
@@ -75,13 +78,13 @@ roomler_web_push_publish_key: "{{ lookup('env', 'WEB_PUSH_PUBLISH_KEY') }}"
 roomler_web_push_private_key: "{{ lookup('env', 'WEB_PUSH_PRIVATE_KEY') }}"
 
 # --- Docker sources (for data migration) ---
-docker_mongo_container: "mongo2"
-docker_mongo_data_path: "/gjovanov/db"
-docker_uploads_path: "/roomler/uploads"
+docker_mongo_container: "{{ lookup('env', 'DOCKER_MONGO_CONTAINER') | default('mongo2', true) }}"
+docker_mongo_data_path: "{{ lookup('env', 'DOCKER_MONGO_DATA_PATH') }}"
+docker_uploads_path: "{{ lookup('env', 'DOCKER_UPLOADS_PATH') }}"
 
 # --- Backup ---
-backup_base_path: "/home/gjovanov/roomler-deploy/backup"
+backup_base_path: "{{ lookup('env', 'BACKUP_BASE_PATH') }}"
 backup_retention_days: 7
 
 # --- Host nginx ---
-host_nginx_conf_dir: "/gjovanov/nginx/conf.d"
+host_nginx_conf_dir: "{{ lookup('env', 'NGINX_CONF_DIR') }}"

@@ -7,6 +7,10 @@
 .ansible_cache/
 *.retry
 
+# Inventory (contains host-specific IPs and SSH paths)
+inventory/hosts.yml
+!inventory/hosts.yml.example
+
 # Backup data (local only)
 backup/
 

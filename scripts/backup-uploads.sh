@@ -4,10 +4,18 @@
 # =============================================================================
 set -euo pipefail
 
-SSH_KEY="/home/gjovanov/k8s-cluster/files/ssh/k8s_ed25519"
-WORKER1="ubuntu@10.10.10.11"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Source .env
+set -a
+source "$PROJECT_DIR/.env"
+set +a
+
+SSH_KEY="${SSH_KEY_PATH:?SSH_KEY_PATH not set in .env}"
+WORKER1="${K8S_SSH_USER:?K8S_SSH_USER not set in .env}@${K8S_WORKER1_IP:?K8S_WORKER1_IP not set in .env}"
 SOURCE_PATH="/data/roomler/uploads/"
-BACKUP_DIR="/home/gjovanov/roomler-deploy/backup/uploads"
+BACKUP_DIR="${BACKUP_BASE_PATH:?BACKUP_BASE_PATH not set in .env}/uploads"
 DATE=$(date +%Y-%m-%d)
 LATEST="$BACKUP_DIR/latest"
 KEEP_DAYS=7

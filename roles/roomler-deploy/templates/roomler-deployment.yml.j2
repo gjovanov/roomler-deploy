@@ -126,16 +126,21 @@ spec:
             limits:
               cpu: {{ roomler_cpu_limit }}
               memory: {{ roomler_memory_limit }}
+          startupProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+            timeoutSeconds: 2
           readinessProbe:
             tcpSocket:
               port: 3000
-            initialDelaySeconds: 15
             periodSeconds: 10
             failureThreshold: 5
           livenessProbe:
             tcpSocket:
               port: 3000
-            initialDelaySeconds: 30
             periodSeconds: 15
             failureThreshold: 10
       volumes:

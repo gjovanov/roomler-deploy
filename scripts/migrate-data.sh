@@ -13,9 +13,11 @@ set -a
 source "$PROJECT_DIR/.env"
 set +a
 
-SSH_KEY="/home/gjovanov/k8s-cluster/files/ssh/k8s_ed25519"
-WORKER1="ubuntu@10.10.10.11"
+SSH_KEY="${SSH_KEY_PATH:?SSH_KEY_PATH not set in .env}"
+WORKER1="${K8S_SSH_USER:?K8S_SSH_USER not set in .env}@${K8S_WORKER1_IP:?K8S_WORKER1_IP not set in .env}"
 DATA_DIR="/data/roomler"
+DOCKER_CONTAINER="${DOCKER_MONGO_CONTAINER:?DOCKER_MONGO_CONTAINER not set in .env}"
+UPLOADS_SRC="${DOCKER_UPLOADS_PATH:?DOCKER_UPLOADS_PATH not set in .env}"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -30,18 +32,18 @@ SSH_OPTS="-i $SSH_KEY -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/nul
 
 # --- Create target directories on worker ---
 log "Creating data directories on k8s-worker1..."
-ssh $SSH_OPTS $WORKER1 "sudo mkdir -p $DATA_DIR/{mongodb,uploads} && sudo chown -R ubuntu:ubuntu $DATA_DIR"
+ssh $SSH_OPTS $WORKER1 "sudo mkdir -p $DATA_DIR/{mongodb,uploads} && sudo chown -R $K8S_SSH_USER:$K8S_SSH_USER $DATA_DIR"
 
 # --- MongoDB dump ---
-log "Dumping MongoDB from Docker container 'mongo2'..."
+log "Dumping MongoDB from Docker container '$DOCKER_CONTAINER'..."
 DUMP_FILE="/tmp/roomlerdb-$(date +%Y%m%d).archive"
 
-docker exec mongo2 mongodump \
+docker exec $DOCKER_CONTAINER mongodump \
   --db roomlerdb \
   --archive=/tmp/roomlerdb.archive \
   --gzip 2>&1
 
-docker cp mongo2:/tmp/roomlerdb.archive "$DUMP_FILE.gz"
+docker cp $DOCKER_CONTAINER:/tmp/roomlerdb.archive "$DUMP_FILE.gz"
 ok "MongoDB dump: $DUMP_FILE.gz ($(du -h "$DUMP_FILE.gz" | cut -f1))"
 
 log "Copying MongoDB dump to k8s-worker1..."
@@ -52,7 +54,7 @@ ok "MongoDB dump transferred"
 log "Syncing uploads to k8s-worker1..."
 rsync -av --progress \
   -e "ssh $SSH_OPTS" \
-  /roomler/uploads/ \
+  "$UPLOADS_SRC/" \
   "$WORKER1:$DATA_DIR/uploads/"
 ok "Uploads synced ($(ssh $SSH_OPTS $WORKER1 "du -sh $DATA_DIR/uploads" | cut -f1))"
 

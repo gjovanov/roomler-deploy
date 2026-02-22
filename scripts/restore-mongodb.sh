@@ -8,10 +8,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-KUBECONFIG="/home/gjovanov/k8s-cluster/files/kubeconfig"
+# Source .env
+set -a
+source "$PROJECT_DIR/.env"
+set +a
+
+KUBECONFIG="${KUBECONFIG_PATH:?KUBECONFIG_PATH not set in .env}"
 NAMESPACE="roomler"
-SSH_KEY="/home/gjovanov/k8s-cluster/files/ssh/k8s_ed25519"
-WORKER1="ubuntu@10.10.10.11"
+SSH_KEY="${SSH_KEY_PATH:?SSH_KEY_PATH not set in .env}"
+WORKER1="${K8S_SSH_USER:?K8S_SSH_USER not set in .env}@${K8S_WORKER1_IP:?K8S_WORKER1_IP not set in .env}"
 DATA_DIR="/data/roomler"
 
 GREEN='\033[0;32m'
@@ -24,11 +29,6 @@ ok()  { echo -e "${GREEN}[$(date '+%H:%M:%S')] OK${NC} $*"; }
 err() { echo -e "${RED}[$(date '+%H:%M:%S')] FAIL${NC} $*"; }
 
 SSH_OPTS="-i $SSH_KEY -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-
-# Source .env for mongo creds
-set -a
-source "$PROJECT_DIR/.env"
-set +a
 
 # Check MongoDB pod is ready
 log "Checking MongoDB pod..."

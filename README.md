@@ -48,7 +48,7 @@ graph TB
         DNS["roomler.live<br/>janus.roomler.live"]
     end
 
-    subgraph Host["Hetzner Bare Metal (94.130.141.98)"]
+    subgraph Host["Bare Metal Host (<your-server-ip>)"]
         NGX["Docker: nginx<br/>HTTP/3 + brotli + GeoIP2<br/>:443 → K8s NodePorts"]
 
         subgraph KVM["KVM / libvirt (10.10.10.0/24)"]
@@ -116,7 +116,7 @@ graph LR
 ### Port Mapping
 
 ```
-Internet → Host nginx (94.130.141.98:443)
+Internet → Host nginx (<your-server-ip>:443)
                 │
                 ├── roomler.live    → 10.10.10.11:30030 (Roomler NodePort)
                 │
@@ -131,7 +131,7 @@ Internet → Host nginx (94.130.141.98:443)
 ## Prerequisites
 
 - K8s cluster running (see sibling `k8s-cluster/` project)
-- `kubectl` configured on the host (`/home/gjovanov/k8s-cluster/files/kubeconfig`)
+- `kubectl` configured on the host (set `KUBECONFIG_PATH` in `.env`)
 - Ansible 2.x installed
 - SSH access to k8s-worker1 (for data migration)
 - Docker containers still running (for initial data migration only)
@@ -140,12 +140,14 @@ Internet → Host nginx (94.130.141.98:443)
 
 ```bash
 # 1. Clone the repo
-git clone git@github.com:gjovanov/roomler-deploy.git
+git clone git@github.com:<your-username>/roomler-deploy.git
 cd roomler-deploy
 
-# 2. Create .env with your secrets
+# 2. Create .env and inventory from examples
 cp .env.example .env
-vi .env
+cp inventory/hosts.yml.example inventory/hosts.yml
+vi .env             # Fill in secrets + infrastructure paths
+vi inventory/hosts.yml  # Fill in K8s node IPs, SSH key path
 
 # 3. Migrate data from Docker (first time only)
 ./scripts/migrate-data.sh
@@ -199,6 +201,20 @@ WEB_PUSH_CONTACT=mailto:admin@example.com
 GIPHY_API_KEY=...
 GOOGLE_ANALYTICS_ID=...
 SUPER_ADMIN_EMAILS='["admin@example.com"]'
+
+# Infrastructure
+KUBECONFIG_PATH=/path/to/kubeconfig
+SSH_KEY_PATH=/path/to/ssh/private_key
+K8S_MASTER_IP=10.10.10.10
+K8S_WORKER1_IP=10.10.10.11
+K8S_WORKER2_IP=10.10.10.12
+K8S_SSH_USER=ubuntu
+HOST_PUBLIC_IP=<your-server-ip>
+NGINX_CONF_DIR=/path/to/nginx/conf.d
+BACKUP_BASE_PATH=/path/to/roomler-deploy/backup
+DOCKER_MONGO_CONTAINER=mongo2
+DOCKER_MONGO_DATA_PATH=/path/to/docker/mongo/data
+DOCKER_UPLOADS_PATH=/path/to/docker/uploads
 ```
 
 | Variable | Description | Used By |
@@ -214,6 +230,12 @@ SUPER_ADMIN_EMAILS='["admin@example.com"]'
 | `TURN_PASSWORD` | TURN credentials | Roomler Secret |
 | `SENDGRID_API_KEY` | Email service | Roomler Secret |
 | `SUPER_ADMIN_EMAILS` | Admin email list (JSON array) | Roomler ConfigMap |
+| `KUBECONFIG_PATH` | Path to kubeconfig file | Scripts, Ansible |
+| `SSH_KEY_PATH` | Path to SSH private key for K8s nodes | Scripts |
+| `K8S_WORKER1_IP` | K8s worker1 IP address | Ansible, Scripts |
+| `K8S_WORKER2_IP` | K8s worker2 IP address | Ansible |
+| `BACKUP_BASE_PATH` | Base path for backup storage | Backup scripts |
+| `NGINX_CONF_DIR` | Host nginx config directory | Cutover script |
 
 ## Deployment Steps
 
@@ -250,8 +272,8 @@ If the cutover fails, restore nginx configs:
 
 ```bash
 # Configs are backed up with timestamp suffix
-cp /gjovanov/nginx/conf.d/roomler.live.conf.bak-YYYYMMDD-HHMMSS /gjovanov/nginx/conf.d/roomler.live.conf
-cp /gjovanov/nginx/conf.d/janus.roomler.live.conf.bak-YYYYMMDD-HHMMSS /gjovanov/nginx/conf.d/janus.roomler.live.conf
+cp $NGINX_CONF_DIR/roomler.live.conf.bak-YYYYMMDD-HHMMSS $NGINX_CONF_DIR/roomler.live.conf
+cp $NGINX_CONF_DIR/janus.roomler.live.conf.bak-YYYYMMDD-HHMMSS $NGINX_CONF_DIR/janus.roomler.live.conf
 docker exec nginx nginx -s reload
 ```
 
@@ -371,7 +393,8 @@ roomler-deploy/
 ├── ansible.cfg                   # Ansible configuration
 │
 ├── inventory/
-│   ├── hosts.yml                 # Host inventory (localhost + K8s nodes)
+│   ├── hosts.yml                 # Host inventory (gitignored — created from example)
+│   ├── hosts.yml.example         # Template for hosts.yml
 │   └── group_vars/
 │       └── all.yml               # All deployment variables
 │

@@ -5,9 +5,17 @@
 # =============================================================================
 set -euo pipefail
 
-KUBECONFIG="/home/gjovanov/k8s-cluster/files/kubeconfig"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Source .env
+set -a
+source "$PROJECT_DIR/.env"
+set +a
+
+KUBECONFIG="${KUBECONFIG_PATH:?KUBECONFIG_PATH not set in .env}"
 NAMESPACE="roomler"
-BACKUP_DIR="/home/gjovanov/roomler-deploy/backup/mongodb"
+BACKUP_DIR="${BACKUP_BASE_PATH:?BACKUP_BASE_PATH not set in .env}/mongodb"
 DATE=$(date +%Y-%m-%d)
 KEEP_DAYS=7
 

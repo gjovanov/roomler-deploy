@@ -8,6 +8,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Source .env
+set -a
+source "$PROJECT_DIR/.env"
+set +a
+
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 CYAN='\033[0;36m'
@@ -19,10 +24,11 @@ ok()   { echo -e "${GREEN}[$(date '+%H:%M:%S')] OK${NC} $*"; }
 err()  { echo -e "${RED}[$(date '+%H:%M:%S')] FAIL${NC} $*"; }
 warn() { echo -e "${YELLOW}[$(date '+%H:%M:%S')] WARN${NC} $*"; }
 
-KUBECONFIG="/home/gjovanov/k8s-cluster/files/kubeconfig"
+KUBECONFIG="${KUBECONFIG_PATH:?KUBECONFIG_PATH not set in .env}"
 NAMESPACE="roomler"
-NGINX_CONF_DIR="/gjovanov/nginx/conf.d"
-K8S_WORKER1_IP="10.10.10.11"
+NGINX_CONF_DIR="${NGINX_CONF_DIR:?NGINX_CONF_DIR not set in .env}"
+K8S_WORKER1_IP="${K8S_WORKER1_IP:?K8S_WORKER1_IP not set in .env}"
+HOST_PUBLIC_IP="${HOST_PUBLIC_IP:?HOST_PUBLIC_IP not set in .env}"
 
 # --- Pre-flight: verify K8s pods are healthy ---
 log "Verifying K8s pods..."
@@ -57,11 +63,11 @@ sed -i "s|proxy_pass.*http://roomler2:3000;|proxy_pass         http://$K8S_WORKE
 # --- Update nginx: janus upstreams ---
 log "Updating janus.roomler.live.conf upstreams..."
 sed -i \
-  -e "s|proxy_pass http://94.130.141.98:8080;|proxy_pass http://$K8S_WORKER1_IP:30808;|" \
-  -e "s|proxy_pass http://94.130.141.98:8188;|proxy_pass http://$K8S_WORKER1_IP:30818;|" \
-  -e "s|proxy_pass http://94.130.141.98:8088/janus;|proxy_pass http://$K8S_WORKER1_IP:30808/janus;|" \
-  -e "s|proxy_pass http://94.130.141.98:7188;|proxy_pass http://$K8S_WORKER1_IP:30718;|" \
-  -e "s|proxy_pass http://94.130.141.98:7088/admin;|proxy_pass http://$K8S_WORKER1_IP:30708/admin;|" \
+  -e "s|proxy_pass http://$HOST_PUBLIC_IP:8080;|proxy_pass http://$K8S_WORKER1_IP:30808;|" \
+  -e "s|proxy_pass http://$HOST_PUBLIC_IP:8188;|proxy_pass http://$K8S_WORKER1_IP:30818;|" \
+  -e "s|proxy_pass http://$HOST_PUBLIC_IP:8088/janus;|proxy_pass http://$K8S_WORKER1_IP:30808/janus;|" \
+  -e "s|proxy_pass http://$HOST_PUBLIC_IP:7188;|proxy_pass http://$K8S_WORKER1_IP:30718;|" \
+  -e "s|proxy_pass http://$HOST_PUBLIC_IP:7088/admin;|proxy_pass http://$K8S_WORKER1_IP:30708/admin;|" \
   "$NGINX_CONF_DIR/janus.roomler.live.conf"
 
 # --- Test nginx config ---

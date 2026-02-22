@@ -4,12 +4,20 @@
 # =============================================================================
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Source .env
+set -a
+source "$PROJECT_DIR/.env"
+set +a
+
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-BACKUP_DIR="/home/gjovanov/roomler-deploy/backup"
+BACKUP_DIR="${BACKUP_BASE_PATH:?BACKUP_BASE_PATH not set in .env}"
 ERRORS=0
 
 ok()   { echo -e "${GREEN}  PASS${NC} $*"; }
@@ -48,8 +56,8 @@ UPLOADS_DIR="$BACKUP_DIR/uploads"
 if [ -d "$UPLOADS_DIR" ]; then
   if [ -L "$UPLOADS_DIR/latest" ] && [ -d "$UPLOADS_DIR/latest" ]; then
     LATEST_DATE=$(readlink "$UPLOADS_DIR/latest" | xargs basename)
-    FILE_COUNT=$(find "$UPLOADS_DIR/latest" -type f 2>/dev/null | wc -l)
-    SIZE=$(du -sh "$UPLOADS_DIR/latest" | cut -f1)
+    FILE_COUNT=$(find -L "$UPLOADS_DIR/latest" -type f 2>/dev/null | wc -l)
+    SIZE=$(du -shL "$UPLOADS_DIR/latest" | cut -f1)
     ok "Latest: $LATEST_DATE ($SIZE, $FILE_COUNT files)"
   else
     fail "No 'latest' symlink in $UPLOADS_DIR"
