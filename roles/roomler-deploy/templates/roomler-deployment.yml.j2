@@ -78,7 +78,7 @@ data:
   GIPHY_API_KEY: "{{ roomler_giphy_api_key }}"
   GOOGLE_ANALYTICS_ID: "{{ roomler_google_analytics_id }}"
   NUXT_TELEMETRY_DISABLED: "1"
-  SUPER_ADMIN_EMAILS: "{{ roomler_super_admin_emails }}"
+  SUPER_ADMIN_EMAILS: '{{ roomler_super_admin_emails | to_json }}'
   WEB_PUSH_CONTACT: "{{ roomler_web_push_contact }}"
   WEB_PUSH_PUBLISH_KEY: "{{ roomler_web_push_publish_key }}"
   NODE_ENV: "production"
