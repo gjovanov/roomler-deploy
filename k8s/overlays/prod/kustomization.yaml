@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: roomler
+
+resources:
+  - ../../base
+
+# IMAGE MIGRATION PENDING.
+# Current images: gjovanov/roomler:latest + gjovanov/janus-slim:latest,
+# both with imagePullPolicy: Never (loaded locally via ctr import).
+# To migrate to registry.roomler.ai:
+#   1. Rebuild from /home/gjovanov/roomler source, push to registry.roomler.ai/roomler:<tag>
+#      and rebuild janus-slim somewhere, push to registry.roomler.ai/janus-slim:<tag>
+#   2. Create regcred Secret in roomler namespace
+#   3. Uncomment images: block + add imagePullSecrets + flip imagePullPolicy in base.
+#
+# images:
+#   - name: gjovanov/roomler
+#     newName: registry.roomler.ai/roomler
+#     newTag: <tag>
+#   - name: gjovanov/janus-slim
+#     newName: registry.roomler.ai/janus-slim
+#     newTag: <tag>

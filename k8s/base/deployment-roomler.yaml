@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: roomler
+  namespace: roomler
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: roomler
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/restartedAt: '2026-03-02T22:14:22+01:00'
+      creationTimestamp: null
+      labels:
+        app: roomler
+    spec:
+      containers:
+      - args:
+        - pm2-runtime
+        - start
+        - /roomler/pm2.config.js
+        command:
+        - npx
+        envFrom:
+        - configMapRef:
+            name: roomler-config
+        - secretRef:
+            name: roomler-secret
+        image: gjovanov/roomler:latest
+        imagePullPolicy: Never
+        livenessProbe:
+          failureThreshold: 10
+          periodSeconds: 15
+          successThreshold: 1
+          tcpSocket:
+            port: 3000
+          timeoutSeconds: 1
+        name: roomler
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 5
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 3000
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: '1'
+            memory: 1Gi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        startupProbe:
+          failureThreshold: 30
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          successThreshold: 1
+          tcpSocket:
+            port: 3000
+          timeoutSeconds: 2
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /roomler/packages/ui/static/uploads
+          name: uploads
+        workingDir: /roomler/packages/ui
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: k8s-worker-1
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: roomler-uploads

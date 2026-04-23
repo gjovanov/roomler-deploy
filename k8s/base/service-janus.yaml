@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: janus
+  namespace: roomler
+spec:
+  ports:
+  - name: http
+    port: 8088
+    protocol: TCP
+    targetPort: 8088
+  - name: websocket
+    port: 8188
+    protocol: TCP
+    targetPort: 8188
+  - name: admin-http
+    port: 7088
+    protocol: TCP
+    targetPort: 7088
+  - name: admin-ws
+    port: 7188
+    protocol: TCP
+    targetPort: 7188
+  selector:
+    app: janus
+  sessionAffinity: None
+  type: ClusterIP
