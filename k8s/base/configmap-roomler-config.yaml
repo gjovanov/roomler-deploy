@@ -1,0 +1,27 @@
+apiVersion: v1
+data:
+  API_URL: https://roomler.live
+  FACEBOOK_ID: '523637501741657'
+  GIPHY_API_KEY: 5trcDKNHFqjsGuLn0y4qWLotb2l4EJ1j
+  GITHUB_ID: b43588b909b90e7853c3
+  GOOGLE_ANALYTICS_ID: UA-171728265-1
+  GOOGLE_ID: 911525906679-5884lej0c0c7elenbrufk8u2pavregbp.apps.googleusercontent.com
+  HOST: 0.0.0.0
+  JANUS_URL: wss://janus.roomler.live/janus_ws
+  LINKEDIN_ID: 81wr0n00ykayha
+  MICROSOFT_ID: 77cd6e19-b2e5-4f28-8b84-cae477401ee2
+  NODE_ENV: production
+  NUXT_TELEMETRY_DISABLED: '1'
+  PORT: '3000'
+  SUPER_ADMIN_EMAILS: '["goran.jovanov@gmail.com"]'
+  TURN_URL: turns:coturn.roomler.live:443?transport=udp
+  TURN_USERNAME: 9999999999:roomler
+  URL: https://roomler.live
+  WEB_PUSH_CONTACT: 'mailto: goran.jovanov@gmail.com'
+  WEB_PUSH_PUBLISH_KEY: BM8q9ORio1o43-byIE3BiwYAgk13IXo8ZiCs4HUD1A17H7tiwosOe-G6iKCdWtGX5H4Cd0Q7y0VhZZ7Mx6zeMYA
+  WS_SCALEOUT_ENABLED: 'true'
+  WS_SCALEOUT_HOST: redis.roomler.svc.cluster.local
+kind: ConfigMap
+metadata:
+  name: roomler-config
+  namespace: roomler
