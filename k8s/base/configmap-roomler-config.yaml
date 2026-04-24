@@ -20,7 +20,7 @@ data:
   URL: https://roomler.live
   WEB_PUSH_CONTACT: 'mailto: goran.jovanov@gmail.com'
   WEB_PUSH_PUBLISH_KEY: BM8q9ORio1o43-byIE3BiwYAgk13IXo8ZiCs4HUD1A17H7tiwosOe-G6iKCdWtGX5H4Cd0Q7y0VhZZ7Mx6zeMYA
-  WS_SCALEOUT_ENABLED: 'true'
+  WS_SCALEOUT_ENABLED: 'false'
   WS_SCALEOUT_HOST: redis.roomler.svc.cluster.local
 kind: ConfigMap
 metadata:
