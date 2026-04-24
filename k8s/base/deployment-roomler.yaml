@@ -36,7 +36,7 @@ spec:
         - secretRef:
             name: roomler-secret
         image: gjovanov/roomler:latest
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 10
           periodSeconds: 15
@@ -78,6 +78,8 @@ spec:
           name: uploads
         workingDir: /roomler/packages/ui
       dnsPolicy: ClusterFirst
+      imagePullSecrets:
+        - name: regcred
       nodeSelector:
         kubernetes.io/hostname: k8s-worker-1
       restartPolicy: Always

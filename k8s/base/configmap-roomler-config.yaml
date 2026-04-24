@@ -1,6 +1,7 @@
 apiVersion: v1
 data:
   API_URL: https://roomler.live
+  API_URL_SERVER: http://localhost:3000
   FACEBOOK_ID: '523637501741657'
   GIPHY_API_KEY: 5trcDKNHFqjsGuLn0y4qWLotb2l4EJ1j
   GITHUB_ID: b43588b909b90e7853c3
