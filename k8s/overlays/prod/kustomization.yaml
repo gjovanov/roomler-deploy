@@ -14,3 +14,38 @@ images:
 # NOTE: gjovanov/janus-slim:latest still pulled from Docker Hub via imagePullPolicy: Never
 # (loaded on worker-1 via ctr import). Migration of janus-slim is a separate concern —
 # this overlay only migrates the main roomler app.
+# ----------------------------------------------------------------------
+# Tier policy (added 2026-05-01).
+# Cluster nodes are labelled:
+#   tier=high-performance  on zeus + jupiter workers
+#   tier=utility           on mars worker
+# This app must run only on the matching tier. The hostname-pin nodeSelector
+# in base/ is left intact (where present) for stateful pods whose data lives
+# on a specific node; this affinity is an ADDITIONAL constraint.
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/affinity
+        value:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: tier
+                      operator: In
+                      values: [high-performance]
+  - target:
+      kind: StatefulSet
+    patch: |-
+      - op: add
+        path: /spec/template/spec/affinity
+        value:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: tier
+                      operator: In
+                      values: [high-performance]
