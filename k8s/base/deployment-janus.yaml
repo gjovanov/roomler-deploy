@@ -59,8 +59,6 @@ spec:
         terminationMessagePolicy: File
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
-      nodeSelector:
-        kubernetes.io/hostname: k8s-worker-1
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}

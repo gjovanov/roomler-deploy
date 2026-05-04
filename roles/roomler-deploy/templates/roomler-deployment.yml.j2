@@ -7,6 +7,7 @@ metadata:
     app: roomler
     project: roomler
 spec:
+  storageClassName: ""
   capacity:
     storage: {{ roomler_uploads_storage_size }}
   accessModes:
@@ -30,6 +31,7 @@ metadata:
   name: roomler-uploads
   namespace: {{ roomler_namespace }}
 spec:
+  storageClassName: ""
   accessModes:
     - ReadWriteOnce
   resources:
@@ -105,6 +107,7 @@ spec:
       containers:
         - name: roomler
           image: {{ roomler_image }}
+          imagePullPolicy: Never
           command: ["npx"]
           args: ["pm2-runtime", "start", "/roomler/pm2.config.js"]
           workingDir: /roomler/packages/ui

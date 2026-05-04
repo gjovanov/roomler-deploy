@@ -21,6 +21,7 @@ spec:
       containers:
         - name: janus
           image: {{ janus_image }}
+          imagePullPolicy: Never
           ports:
             - containerPort: 8088
               name: http

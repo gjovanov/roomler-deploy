@@ -14,6 +14,8 @@ spec:
       labels:
         app: redis
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: {{ data_node }}
       containers:
         - name: redis
           image: {{ redis_image }}

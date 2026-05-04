@@ -68,8 +68,6 @@ spec:
         - mountPath: /data/db
           name: mongodb-data
       dnsPolicy: ClusterFirst
-      nodeSelector:
-        kubernetes.io/hostname: k8s-worker-1
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
