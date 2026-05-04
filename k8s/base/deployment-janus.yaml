@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - image: gjovanov/janus-slim:latest
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
         name: janus
         ports:
         - containerPort: 8088
